@@ -13,3 +13,4 @@ tower = "0.4.12"
 serde = {version = "1.0.137", features = ["derive"]}
 tracing = "0.1.35"
 tracing-subscriber = "0.3.11"
+tower-http = "0.3.4"
