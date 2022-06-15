@@ -57,16 +57,21 @@ async fn main() {
 
   // not the greatest idea, but i will save items and users in this hash maps
   // let mut state = State::new();
-  let mut state: SharedState = Arc::new(Mutex::new(State::new(HashMap::new(), HashMap::new())));
+  let mut state: SharedState = Arc::new(
+    Mutex::new(
+      State::new(HashMap::new(), HashMap::new())
+    )
+  );
 
   // build our application with a single route
   let app = Router::new()
     .route("/", get(|| async { "Hello, World!" }))
     .route("/users/:user_id", get(get_user))
     .route("/users", post(create_user))
+    .route("/users", get(list_users))
     .route("/items/:item_id", get(get_item))
     .route("/items", post(create_item))
-    .route("/state", get(get_state))
+    .route("/items", get(list_items))
     .layer(Extension(state));
 
   // run it with hyper on localhost:3000
@@ -79,6 +84,10 @@ async fn main() {
 // Handlers
 async fn get_state(Extension(state): Extension<SharedState>) -> impl IntoResponse {
   // Json(&state)
+}
+
+async fn list_users(Extension(state): Extension<SharedState>) -> impl IntoResponse {
+  Json(state.lock().unwrap().users.clone())
 }
 
 async fn get_user(Path(user_id): Path<u8>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
@@ -99,4 +108,8 @@ async fn create_item(Json(item_rq): Json<Item>, Extension(mut state): Extension<
   let item: Item = Item::new(item_rq.name.to_string(), User::new(item_rq.owner.username.to_string(), item_rq.owner.age, item_rq.owner.id), item_rq.id);
   &mut state.lock().unwrap().items.insert(item_rq.id, item.clone());
   Json(item)
+}
+
+async fn list_items(Extension(state): Extension<SharedState>) -> impl IntoResponse {
+  Json(state.lock().unwrap().items.clone())
 }
